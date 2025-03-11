@@ -12,9 +12,12 @@ with open("sentiment_model.pkl", "rb") as file:
 def home():
     return jsonify({"message": "API is running!"})
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['GET', 'POST'])
 def predict():
     try:
+        if request.method == "GET":
+            return jsonify({"message": "Use POST with JSON payload"}), 405
+        
         data = request.json
         text = data.get("text", "")
 
