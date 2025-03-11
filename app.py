@@ -1,18 +1,33 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import pickle
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  
 
-@app.route("/")
-def hello_world():
-    print('hello')
-    return "<p>Hello world version 4.1</>"
+with open("sentiment_model.pkl", "rb") as file:
+    model = pickle.load(file)
 
-@app.route('/sentiment', methods=['POST'])
-def get_sentiment():
-    input_data = request.json
-    print(input_data)
+@app.route('/')
+def home():
+    return jsonify({"message": "API is running!"})
 
-    return {'input_data': input_data, 'message': 'hello'}
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        data = request.json
+        text = data.get("text", "")
+
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
+        sentiment = model.predict([text])[0]
+        return jsonify({"sentiment": sentiment})
+
+    except Exception as e:
+        print(f"Error in prediction: {e}") 
+        return jsonify({"error": "Internal Server Error"}), 500
+    
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port="8080", debug=False)
